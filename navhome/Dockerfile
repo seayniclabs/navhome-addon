@@ -1,15 +1,15 @@
 ARG BUILD_FROM=ghcr.io/home-assistant/amd64-base:3.19
 FROM node:22-alpine AS builder
 
+# Clone and build the NavHome SvelteKit app
+RUN apk add --no-cache git
 WORKDIR /app
-COPY navhome-app/package*.json ./
-RUN npm ci
-COPY navhome-app/ .
-RUN npm run build
+RUN git clone --depth 1 https://github.com/seayniclabs/navhome.git .
+RUN npm ci && npm run build
 
 FROM ${BUILD_FROM}
 
-RUN apk add --no-cache nodejs npm
+RUN apk add --no-cache nodejs
 
 WORKDIR /opt/navhome
 
