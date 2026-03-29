@@ -25,10 +25,13 @@ const MIME_TYPES = {
 function getHaAppBasePath() {
   const override = (process.env.NAVHOME_HA_APP_BASE || '').trim().replace(/\/$/, '');
   if (override) return override;
-  if (!SUPERVISOR_TOKEN) return '';
   const host = (process.env.HOSTNAME || '').split('.')[0];
-  if (!host) return '';
-  return `/app/${host.replace(/-/g, '_')}`;
+  if (!host || host === 'localhost') return '';
+  // HA add-on hostnames look like 2f8061d9-navhome; rewrite HTML even if token env is late/missing.
+  if (/^[0-9a-f]{8}-/.test(host) || SUPERVISOR_TOKEN) {
+    return `/app/${host.replace(/-/g, '_')}`;
+  }
+  return '';
 }
 
 function rewriteHtmlForHaIngress(html, basePath) {

@@ -29,7 +29,7 @@ GitHub Actions builds **per-architecture** images and pushes them to GHCR. The a
 
 `image: ghcr.io/seayniclabs/navhome-ha-{arch}`
 
-Supervisor substitutes `{arch}` and pulls the tag that matches the `version` field in `config.yaml` (for example `0.1.4`).
+Supervisor substitutes `{arch}` and pulls the tag that matches the `version` field in `config.yaml` (for example `0.1.5`).
 
 After changing `version` in `config.yaml`, push to `main` and wait for **Publish add-on images** to finish before users hit **Update** in Home Assistant.
 

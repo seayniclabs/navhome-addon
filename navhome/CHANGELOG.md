@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.5
+
+- SPA: fetch **`${base}/api/ha-config`** (was `/api/ha-config`, which hit HA Core under Ingress).
+- Server: derive `/app/…` asset prefix from **`HOSTNAME`** when it looks like an HA add-on (`xxxxxxxx-…`), not only when `SUPERVISOR_TOKEN` is set.
+
 ## 0.1.4
 
 - Fix **white Web UI under Ingress**: rewrite `index.html` asset URLs from `/_app/...` to `/app/<hostname-with-underscores>/_app/...` (HA opens `/app/2f8061d9_navhome` while the SPA referenced the HA host root). Optional override: env **`NAVHOME_HA_APP_BASE`**.
