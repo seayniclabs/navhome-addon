@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.3
+
+- Dockerfile: build SPA on `BUILDPLATFORM` (always amd64 on GitHub Actions) so `npm run build` does not run on emulated arm32 — fixes lightningcss `linux-arm-musl` missing on armv7/armhf.
+
 ## 0.1.2
 
 - CI: check out private `seayniclabs/navhome` into `navhome/app` instead of cloning inside Docker (fixes `git clone` exit 128 on GitHub Actions).
