@@ -18,7 +18,29 @@ const MIME_TYPES = {
   '.woff2': 'font/woff2',
 };
 
-// Fetch HA connection info from Supervisor API
+/**
+ * Browser URL for this add-on is /app/<id>_<slug> (underscores). Container HOSTNAME is <id>-<slug> (hyphens).
+ * SvelteKit emits root-relative /_app/... which resolves to HA origin root → white screen under Ingress.
+ */
+function getHaAppBasePath() {
+  const override = (process.env.NAVHOME_HA_APP_BASE || '').trim().replace(/\/$/, '');
+  if (override) return override;
+  if (!SUPERVISOR_TOKEN) return '';
+  const host = (process.env.HOSTNAME || '').split('.')[0];
+  if (!host) return '';
+  return `/app/${host.replace(/-/g, '_')}`;
+}
+
+function rewriteHtmlForHaIngress(html, basePath) {
+  if (!basePath) return html;
+  return html
+    .replace(/href="\/_app\//g, `href="${basePath}/_app/`)
+    .replace(/import\("\/_app\//g, `import("${basePath}/_app/`)
+    .replace(/base:\s*""/g, `base: "${basePath}"`);
+}
+
+const HA_APP_BASE = getHaAppBasePath();
+
 async function getHaConfig() {
   try {
     const res = await fetch(`${SUPERVISOR_URL}/core/api/config`, {
@@ -27,7 +49,6 @@ async function getHaConfig() {
     if (!res.ok) throw new Error(`Supervisor returned ${res.status}`);
     const config = await res.json();
 
-    // Get a short-lived token from Supervisor for frontend use
     const tokenRes = await fetch(`${SUPERVISOR_URL}/auth`, {
       headers: { Authorization: `Bearer ${SUPERVISOR_TOKEN}` },
     });
@@ -38,7 +59,6 @@ async function getHaConfig() {
       accessToken = tokenData.data?.token || '';
     }
 
-    // Build HA URL from Supervisor perspective
     const haUrl = `http://supervisor/core`;
 
     return {
@@ -59,7 +79,6 @@ async function getHaConfig() {
 function serveStatic(req, res) {
   let urlPath = new URL(req.url, 'http://localhost').pathname;
 
-  // Strip ingress base path if present
   const ingressPath = process.env.INGRESS_PATH || '';
   if (ingressPath && urlPath.startsWith(ingressPath)) {
     urlPath = urlPath.slice(ingressPath.length) || '/';
@@ -69,25 +88,33 @@ function serveStatic(req, res) {
 
   const filePath = join(STATIC_DIR, urlPath);
 
-  // Prevent directory traversal
   if (!filePath.startsWith(STATIC_DIR)) {
     res.writeHead(403);
     res.end('Forbidden');
     return;
   }
 
+  const sendHtml = (buf) => {
+    const raw = buf.toString('utf8');
+    const body = rewriteHtmlForHaIngress(raw, HA_APP_BASE);
+    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+    res.end(body);
+  };
+
   if (existsSync(filePath) && statSync(filePath).isFile()) {
     const ext = extname(filePath);
     const contentType = MIME_TYPES[ext] || 'application/octet-stream';
     const content = readFileSync(filePath);
-    res.writeHead(200, { 'Content-Type': contentType });
-    res.end(content);
+    if (ext === '.html') {
+      sendHtml(content);
+    } else {
+      res.writeHead(200, { 'Content-Type': contentType });
+      res.end(content);
+    }
   } else {
-    // SPA fallback
     const indexPath = join(STATIC_DIR, 'index.html');
     if (existsSync(indexPath)) {
-      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-      res.end(readFileSync(indexPath));
+      sendHtml(readFileSync(indexPath));
     } else {
       res.writeHead(404);
       res.end('Not Found');
@@ -103,7 +130,6 @@ const server = createServer(async (req, res) => {
     pathname = pathname.slice(ingressPath.length) || '/';
   }
 
-  // API: provide HA connection config to the frontend
   if (pathname === '/api/ha-config') {
     const config = await getHaConfig();
     res.writeHead(200, {
@@ -121,4 +147,5 @@ server.listen(PORT, '0.0.0.0', () => {
   console.log(`NavHome add-on server running on port ${PORT}`);
   console.log(`Supervisor token: ${SUPERVISOR_TOKEN ? 'present' : 'MISSING'}`);
   console.log(`Ingress path: ${process.env.INGRESS_PATH || '(none)'}`);
+  console.log(`HA app base (asset prefix): ${HA_APP_BASE || '(none — standalone)'}`);
 });

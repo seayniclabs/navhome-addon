@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.4
+
+- Fix **white Web UI under Ingress**: rewrite `index.html` asset URLs from `/_app/...` to `/app/<hostname-with-underscores>/_app/...` (HA opens `/app/2f8061d9_navhome` while the SPA referenced the HA host root). Optional override: env **`NAVHOME_HA_APP_BASE`**.
+
 ## 0.1.3
 
 - Dockerfile: build SPA on `BUILDPLATFORM` (always amd64 on GitHub Actions) so `npm run build` does not run on emulated arm32 — fixes lightningcss `linux-arm-musl` missing on armv7/armhf.
