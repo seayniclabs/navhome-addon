@@ -19,18 +19,31 @@ const MIME_TYPES = {
 };
 
 /**
- * Browser URL for this add-on is /app/<id>_<slug> (underscores). Container HOSTNAME is <id>-<slug> (hyphens).
- * SvelteKit emits root-relative /_app/... which resolves to HA origin root → white screen under Ingress.
+ * SvelteKit fallback index.html uses root-relative /_app/... → browser hits HA origin /_app/ → 404 under Ingress.
+ * Supervisor sets Docker hostname to the add-on slug (e.g. navhome), not /app/<8hex>_<slug>, so env-only detection fails.
+ * HA Core sets X-Ingress-Path: /api/hassio_ingress/<token> on requests proxied to the add-on — use that per request.
  */
-function getHaAppBasePath() {
-  const override = (process.env.NAVHOME_HA_APP_BASE || '').trim().replace(/\/$/, '');
+function normalizeBasePath(p) {
+  if (!p) return '';
+  return p.replace(/\/$/, '');
+}
+
+function resolveHaAssetBase(req) {
+  const override = normalizeBasePath((process.env.NAVHOME_HA_APP_BASE || '').trim());
   if (override) return override;
+
+  const ingressPath = (req.headers['x-ingress-path'] || req.headers['X-Ingress-Path'] || '').trim();
+  if (ingressPath) return normalizeBasePath(ingressPath);
+
+  const referer = (req.headers.referer || req.headers.referrer || '').trim();
+  const appMatch = referer.match(/\/app\/([0-9a-f]{8}_[^/?#]+)/i);
+  if (appMatch) return `/app/${appMatch[1]}`;
+
   const host = (process.env.HOSTNAME || '').split('.')[0];
-  if (!host || host === 'localhost') return '';
-  // HA add-on hostnames look like 2f8061d9-navhome; rewrite HTML even if token env is late/missing.
-  if (/^[0-9a-f]{8}-/.test(host) || SUPERVISOR_TOKEN) {
+  if (host && host !== 'localhost' && /^[0-9a-f]{8}-/.test(host)) {
     return `/app/${host.replace(/-/g, '_')}`;
   }
+
   return '';
 }
 
@@ -38,11 +51,11 @@ function rewriteHtmlForHaIngress(html, basePath) {
   if (!basePath) return html;
   return html
     .replace(/href="\/_app\//g, `href="${basePath}/_app/`)
+    .replace(/href='\/_app\//g, `href='${basePath}/_app/`)
     .replace(/import\("\/_app\//g, `import("${basePath}/_app/`)
+    .replace(/import\('\/_app\//g, `import('${basePath}/_app/`)
     .replace(/base:\s*""/g, `base: "${basePath}"`);
 }
-
-const HA_APP_BASE = getHaAppBasePath();
 
 async function getHaConfig() {
   try {
@@ -99,7 +112,8 @@ function serveStatic(req, res) {
 
   const sendHtml = (buf) => {
     const raw = buf.toString('utf8');
-    const body = rewriteHtmlForHaIngress(raw, HA_APP_BASE);
+    const basePath = resolveHaAssetBase(req);
+    const body = rewriteHtmlForHaIngress(raw, basePath);
     res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
     res.end(body);
   };
@@ -149,6 +163,9 @@ const server = createServer(async (req, res) => {
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`NavHome add-on server running on port ${PORT}`);
   console.log(`Supervisor token: ${SUPERVISOR_TOKEN ? 'present' : 'MISSING'}`);
-  console.log(`Ingress path: ${process.env.INGRESS_PATH || '(none)'}`);
-  console.log(`HA app base (asset prefix): ${HA_APP_BASE || '(none — standalone)'}`);
+  console.log(`Ingress path env: ${process.env.INGRESS_PATH || '(none)'}`);
+  const hint = (process.env.NAVHOME_HA_APP_BASE || '').trim()
+    ? 'NAVHOME_HA_APP_BASE'
+    : 'X-Ingress-Path / Referer / HOSTNAME (8hex-)';
+  console.log(`Asset prefix: per-request (${hint})`);
 });

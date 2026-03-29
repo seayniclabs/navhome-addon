@@ -23,7 +23,7 @@ Supervisor pulls images **without** logging in to GitHub. For each package **`na
 
 ## Ingress Web UI is white
 
-The add-on server rewrites `/_app/…` in HTML to **`/app/<id>_<slug>/_app/…`** using container **`HOSTNAME`** (`2f8061d9-navhome` → `/app/2f8061d9_navhome`). If that ever mismatches your HA URL bar, set env **`NAVHOME_HA_APP_BASE`** on the add-on (same path as in the browser, no trailing slash).
+The add-on rewrites `/_app/…` in HTML so assets load under Ingress. **Primary signal:** **`X-Ingress-Path`** (`/api/hassio_ingress/<token>`), which Home Assistant Core adds on requests proxied to the add-on. Fallbacks: **`Referer`** (`/app/<8hex>_<slug>`), then **`HOSTNAME`** only when it looks like `xxxxxxxx-slug` (uncommon on current Supervisor). Override anytime with env **`NAVHOME_HA_APP_BASE`** (no trailing slash), e.g. if you need to match the `/app/…` URL bar explicitly.
 
 ## Images
 
@@ -31,7 +31,7 @@ GitHub Actions builds **per-architecture** images and pushes them to GHCR. The a
 
 `image: ghcr.io/seayniclabs/navhome-ha-{arch}`
 
-Supervisor substitutes `{arch}` and pulls the tag that matches the `version` field in `config.yaml` (for example `0.1.5`).
+Supervisor substitutes `{arch}` and pulls the tag that matches the `version` field in `config.yaml` (for example `0.1.6`).
 
 After changing `version` in `config.yaml`, push to `main` and wait for **Publish add-on images** to finish before users hit **Update** in Home Assistant.
 

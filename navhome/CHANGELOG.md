@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.6
+
+- **Ingress white screen:** resolve the asset prefix **per HTTP request** from **`X-Ingress-Path`** (`/api/hassio_ingress/<token>`, set by Home Assistant Core on proxied requests). Supervisor’s Docker **`HOSTNAME`** is usually the add-on **slug** (`navhome`), not `xxxxxxxx-slug`, so the previous env-only `/app/…` guess often stayed empty and `/_app/…` kept hitting the HA host root (404).
+- Fallbacks: **`Referer`** parsing for `/app/<8hex>_<slug>`, then **`HOSTNAME`** only when it matches `xxxxxxxx-…`. Removed **`SUPERVISOR_TOKEN`** as a trigger for `/app/${slug}` (wrong path). Optional **`NAVHOME_HA_APP_BASE`** unchanged.
+- HTML rewrite: also handle single-quoted `href` / `import('\/_app/…`.
+
 ## 0.1.5
 
 - **Store card:** replace invalid **`icon.png`** (was an 11-byte text stub) with a real 128×128 PNG from the NavHome brand SVG. Reload the custom repo in HA if the icon stays broken (cache).
