@@ -19,6 +19,10 @@ Re-run **Publish add-on images** after updating the secret.
 
 Supervisor pulls images **without** logging in to GitHub. For each package **`navhome-ha-<arch>`**, set **Package settings → Change package visibility → Public** (org/repo admins), or HA installs will get **401** on pull.
 
+## Ingress Web UI is white
+
+The add-on server rewrites `/_app/…` in HTML to **`/app/<id>_<slug>/_app/…`** using container **`HOSTNAME`** (`2f8061d9-navhome` → `/app/2f8061d9_navhome`). If that ever mismatches your HA URL bar, set env **`NAVHOME_HA_APP_BASE`** on the add-on (same path as in the browser, no trailing slash).
+
 ## Images
 
 GitHub Actions builds **per-architecture** images and pushes them to GHCR. The add-on `config.yaml` sets:
