@@ -4,6 +4,8 @@ Custom repository URL (Home Assistant → Settings → Add-ons → Add-on store 
 
 `https://github.com/seayniclabs/navhome-addon`
 
+The add-on **store card** image is **`navhome/icon.png`** next to `config.yaml` (128×128 PNG). Home Assistant loads it from GitHub when you refresh the repo — it is **not** inside the Docker image.
+
 ## CI secret (required)
 
 The SPA is in the private repo **seayniclabs/navhome**. **`GITHUB_TOKEN` cannot check out other private repos** in the org, so checkout fails with “Not Found” until **`NAVHOME_REPO_PAT`** can read that repo.

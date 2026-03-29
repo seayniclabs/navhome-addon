@@ -2,6 +2,8 @@
 
 ## 0.1.5
 
+- **Store card:** replace invalid **`icon.png`** (was an 11-byte text stub) with a real 128×128 PNG from the NavHome brand SVG. Reload the custom repo in HA if the icon stays broken (cache).
+
 - SPA: fetch **`${base}/api/ha-config`** (was `/api/ha-config`, which hit HA Core under Ingress).
 - Server: derive `/app/…` asset prefix from **`HOSTNAME`** when it looks like an HA add-on (`xxxxxxxx-…`), not only when `SUPERVISOR_TOKEN` is set.
 
