@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.7
+
+- **Ingress navigation 404:** SPA used `goto('/report')`, which the browser resolves to **`/report`** at the HA origin (wrong). All in-app navigations now use **`goto(resolve(…))`** from **`$app/paths`** so paths stay under the rewritten SvelteKit **`base`** (e.g. `/api/hassio_ingress/<token>/…`). Rebuilt from **navhome** app commit including this fix.
+
 ## 0.1.6
 
 - **Ingress white screen:** resolve the asset prefix **per HTTP request** from **`X-Ingress-Path`** (`/api/hassio_ingress/<token>`, set by Home Assistant Core on proxied requests). Supervisor’s Docker **`HOSTNAME`** is usually the add-on **slug** (`navhome`), not `xxxxxxxx-slug`, so the previous env-only `/app/…` guess often stayed empty and `/_app/…` kept hitting the HA host root (404).

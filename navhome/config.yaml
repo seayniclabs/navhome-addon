@@ -1,5 +1,5 @@
 name: NavHome
-version: 0.1.6
+version: 0.1.7
 slug: navhome
 description: Navigate your smart home to local control. Guided migration from cloud to Home Assistant.
 url: https://navhome.app
