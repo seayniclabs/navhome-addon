@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.8
+
+- **Ingress "Unknown error" / Supervisor `Cannot connect to host …:8099`:** the server used **`import.meta.dirname`** to locate `web/`. Alpine **`nodejs`** in the HA base image may run **Node older than 20.11**, where that property is missing — **`path.join(undefined, 'web')` throws at import time**, the process never calls **`listen()`**, and Supervisor gets **connection refused** on the ingress port. Switched to **`dirname(fileURLToPath(import.meta.url))`**. Fail fast with a clear log line if **`web/index.html`** is missing.
+
 ## 0.1.7
 
 - **Ingress navigation 404:** SPA used `goto('/report')`, which the browser resolves to **`/report`** at the HA origin (wrong). All in-app navigations now use **`goto(resolve(…))`** from **`$app/paths`** so paths stay under the rewritten SvelteKit **`base`** (e.g. `/api/hassio_ingress/<token>/…`). Rebuilt from **navhome** app commit including this fix.

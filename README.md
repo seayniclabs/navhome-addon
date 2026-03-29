@@ -25,13 +25,17 @@ Supervisor pulls images **without** logging in to GitHub. For each package **`na
 
 The add-on rewrites `/_app/…` in HTML so assets load under Ingress. **Primary signal:** **`X-Ingress-Path`** (`/api/hassio_ingress/<token>`), which Home Assistant Core adds on requests proxied to the add-on. Fallbacks: **`Referer`** (`/app/<8hex>_<slug>`), then **`HOSTNAME`** only when it looks like `xxxxxxxx-slug` (uncommon on current Supervisor). Override anytime with env **`NAVHOME_HA_APP_BASE`** (no trailing slash), e.g. if you need to match the `/app/…` URL bar explicitly.
 
+## Ingress "Unknown error" / Supervisor log: `Cannot connect to host …:8099`
+
+Supervisor is failing **TCP connect** to the add-on ingress port — usually **Node exited before `listen()`** (crash on startup) or the container is stopped. Open **Settings → Add-ons → NavHome → Log** (not only Supervisor logs). **0.1.8+** avoids a common crash: **`import.meta.dirname`** was missing on older Alpine Node builds.
+
 ## Images
 
 GitHub Actions builds **per-architecture** images and pushes them to GHCR. The add-on `config.yaml` sets:
 
 `image: ghcr.io/seayniclabs/navhome-ha-{arch}`
 
-Supervisor substitutes `{arch}` and pulls the tag that matches the `version` field in `config.yaml` (for example `0.1.7`).
+Supervisor substitutes `{arch}` and pulls the tag that matches the `version` field in `config.yaml` (for example `0.1.8`).
 
 After changing `version` in `config.yaml`, push to `main` and wait for **Publish add-on images** to finish before users hit **Update** in Home Assistant.
 

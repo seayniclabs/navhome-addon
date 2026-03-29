@@ -1,11 +1,12 @@
 import { createServer } from 'node:http';
 import { readFileSync, existsSync, statSync } from 'node:fs';
-import { join, extname } from 'node:path';
+import { join, extname, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const PORT = Number(process.env.INGRESS_PORT || 8099);
 const SUPERVISOR_TOKEN = process.env.SUPERVISOR_TOKEN || '';
 const SUPERVISOR_URL = 'http://supervisor';
-const STATIC_DIR = join(import.meta.dirname, 'web');
+const STATIC_DIR = join(dirname(fileURLToPath(import.meta.url)), 'web');
 
 const MIME_TYPES = {
   '.html': 'text/html; charset=utf-8',
@@ -17,6 +18,12 @@ const MIME_TYPES = {
   '.ico': 'image/x-icon',
   '.woff2': 'font/woff2',
 };
+
+const INDEX_HTML = join(STATIC_DIR, 'index.html');
+if (!existsSync(INDEX_HTML)) {
+  console.error(`NavHome FATAL: ${INDEX_HTML} missing — container image is incomplete`);
+  process.exit(1);
+}
 
 /**
  * SvelteKit fallback index.html uses root-relative /_app/... → browser hits HA origin /_app/ → 404 under Ingress.
