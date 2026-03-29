@@ -1,0 +1,2 @@
+# Local checkout of the SPA for docker build (CI creates this in the runner only)
+navhome/app/

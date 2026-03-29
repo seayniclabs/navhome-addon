@@ -1,5 +1,5 @@
 name: NavHome
-version: 0.1.1
+version: 0.1.2
 slug: navhome
 description: Navigate your smart home to local control. Guided migration from cloud to Home Assistant.
 url: https://navhome.app
@@ -9,7 +9,6 @@ arch:
   - amd64
   - armhf
   - armv7
-  - i386
 homeassistant: "2024.1.0"
 hassio_api: true
 ingress: true

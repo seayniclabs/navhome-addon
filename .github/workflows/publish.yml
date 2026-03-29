@@ -32,10 +32,15 @@ jobs:
             platform: linux/arm/v6
           - arch: armv7
             platform: linux/arm/v7
-          - arch: i386
-            platform: linux/386
     steps:
       - uses: actions/checkout@v4
+
+      - name: Checkout NavHome app
+        uses: actions/checkout@v4
+        with:
+          repository: seayniclabs/navhome
+          path: navhome/app
+          token: ${{ secrets.NAVHOME_REPO_PAT || secrets.GITHUB_TOKEN }}
 
       - name: Read add-on version
         id: meta
