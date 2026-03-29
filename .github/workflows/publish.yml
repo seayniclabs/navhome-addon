@@ -35,12 +35,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Require PAT for private NavHome checkout
+        if: ${{ secrets.NAVHOME_REPO_PAT == '' }}
+        run: |
+          echo "::error::Set Actions secret NAVHOME_REPO_PAT — fine-grained PAT, Contents: Read on repo seayniclabs/navhome. GITHUB_TOKEN cannot read other private org repos (checkout returns Not Found)."
+          exit 1
+
       - name: Checkout NavHome app
+        if: ${{ secrets.NAVHOME_REPO_PAT != '' }}
         uses: actions/checkout@v4
         with:
           repository: seayniclabs/navhome
           path: navhome/app
-          token: ${{ secrets.NAVHOME_REPO_PAT || secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.NAVHOME_REPO_PAT }}
 
       - name: Read add-on version
         id: meta

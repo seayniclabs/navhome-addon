@@ -3,6 +3,7 @@
 ## 0.1.2
 
 - CI: check out private `seayniclabs/navhome` into `navhome/app` instead of cloning inside Docker (fixes `git clone` exit 128 on GitHub Actions).
+- CI: require repo secret **`NAVHOME_REPO_PAT`** — `GITHUB_TOKEN` cannot read sibling private repos.
 - Drop **i386** — `node:22-alpine` has no `linux/386` variant, so that arch could not build.
 
 ## 0.1.1
